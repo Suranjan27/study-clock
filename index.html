@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Flocus | Deep Focus Environment</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
@@ -18,39 +18,41 @@
         body {
             font-family: var(--font-main);
             margin: 0;
-            overflow: hidden;
+            overflow-x: hidden;
             background: #000;
             color: white;
             letter-spacing: -0.01em;
+            /* Use dynamic viewport height for mobile browsers */
+            height: 100dvh; 
         }
 
         #bg-video {
             position: fixed;
-            right: 0;
-            bottom: 0;
-            min-width: 100%;
-            min-height: 100%;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             z-index: -1;
             filter: brightness(0.45) contrast(1.1);
             object-fit: cover;
             transition: opacity 0.8s ease-in-out;
         }
 
-        /* High-End Glassmorphism - Compact Scale */
+        /* High-End Glassmorphism */
         .glass {
             background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
-            backdrop-filter: blur(30px) saturate(150%);
-            -webkit-backdrop-filter: blur(30px) saturate(150%);
+            backdrop-filter: blur(25px) saturate(150%);
+            -webkit-backdrop-filter: blur(25px) saturate(150%);
             border: 1px solid rgba(255, 255, 255, 0.12);
-            border-radius: 2.5rem;
-            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.6);
+            border-radius: 2rem;
+            box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
         }
 
         .timer-btn {
             font-family: var(--font-main);
             text-transform: uppercase;
             letter-spacing: 0.12em;
-            font-size: 0.65rem;
+            font-size: 0.6rem;
             font-weight: 700;
             opacity: 0.4;
             transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
@@ -69,14 +71,14 @@
             text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
         }
 
-        /* Adjusted Progress Ring */
+        /* Responsive Progress Ring */
         .progress-ring {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 420px;
-            height: 420px;
+            width: min(90vw, 420px);
+            height: min(90vw, 420px);
             z-index: -1;
             opacity: 0.15;
             pointer-events: none;
@@ -101,13 +103,19 @@
             font-weight: 200;
             letter-spacing: 0.08em;
             text-transform: uppercase;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             opacity: 0.5;
+            max-width: 80vw;
+            text-align: center;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .subject-input:focus {
             outline: none;
             opacity: 1;
+            white-space: normal;
         }
 
         #audio-element { display: none; }
@@ -115,44 +123,46 @@
         .nav-icon-btn {
             transition: all 0.3s ease;
             color: rgba(255,255,255,0.4);
+            cursor: pointer;
         }
         .nav-icon-btn:hover {
             color: rgba(255,255,255,1);
-            transform: translateY(-1px);
         }
 
-        .music-pulse {
-            animation: music-bounce 1s infinite ease-in-out;
-        }
-
-        @keyframes music-bounce {
-            0%, 100% { transform: scaleY(1); }
-            50% { transform: scaleY(1.5); }
+        /* Responsive UI Adjustments */
+        @media (max-width: 640px) {
+            .glass {
+                border-radius: 1.5rem;
+            }
+            .timer-btn {
+                padding: 0.5rem 1rem !important;
+                font-size: 0.55rem;
+            }
         }
     </style>
 </head>
-<body class="h-screen w-full flex flex-col justify-between p-12">
+<body class="flex flex-col justify-between p-4 sm:p-8 lg:p-12">
 
     <!-- Ambient Background -->
     <img id="bg-video" src="https://narutobattlescreen-js.netlify.app/fightingbackground1.gif" alt="Environment">
 
     <!-- Header -->
-    <header class="flex justify-between items-start z-10 w-full">
+    <header class="flex justify-between items-start z-10 w-full mb-4">
         <div class="flex flex-col gap-1">
             <div class="flex items-center gap-2 opacity-50">
                 <div class="w-6 h-[1px] bg-white"></div>
-                <span class="text-[10px] tracking-[0.4em] font-bold uppercase">study environment</span>
+                <span class="text-[9px] sm:text-[10px] tracking-[0.4em] font-bold uppercase">Zen Session</span>
             </div>
         </div>
-        <div class="max-w-sm text-right">
-            <p id="quote-display" class="text-lg font-light opacity-50 leading-relaxed italic transition-all duration-1000 select-none">
+        <div class="max-w-[150px] sm:max-w-sm text-right">
+            <p id="quote-display" class="text-xs sm:text-lg font-light opacity-50 leading-relaxed italic transition-all duration-1000 select-none">
                 "The old ways won't open new doors."
             </p>
         </div>
     </header>
 
-    <!-- Main Content: Centered -->
-    <main class="relative flex flex-col items-center justify-center z-10 flex-grow">
+    <!-- Main Content -->
+    <main class="relative flex flex-col items-center justify-center z-10 flex-grow py-4">
         
         <!-- Glowing Ambient Ring -->
         <div id="ambient-ring" class="progress-ring">
@@ -162,38 +172,38 @@
         </div>
 
         <!-- Subject -->
-        <div class="flex items-center gap-3 mb-8 group cursor-default transition-all">
-            <i data-lucide="circle-dot" class="w-2.5 h-2.5 text-white opacity-30 group-hover:opacity-100 transition-opacity"></i>
+        <div class="flex items-center gap-3 mb-6 group cursor-default transition-all">
+            <i data-lucide="circle-dot" class="w-2 sm:w-2.5 h-2 sm:h-2.5 text-white opacity-30"></i>
             <span id="subject-text" contenteditable="true" class="subject-input cursor-text hover:opacity-100 transition-opacity">Deep Work Session</span>
         </div>
 
         <!-- Timer Card -->
-        <div class="glass p-10 w-full max-w-lg flex flex-col items-center">
+        <div class="glass p-6 sm:p-10 w-full max-w-lg flex flex-col items-center">
             
             <!-- Mode Selector -->
-            <div class="flex gap-1 mb-10 bg-white/5 p-1 rounded-xl border border-white/5">
-                <button onclick="setMode('focus')" id="btn-focus" class="timer-btn active px-6 py-2 rounded-lg">Focus</button>
-                <button onclick="setMode('short')" id="btn-short" class="timer-btn px-6 py-2 rounded-lg">Short</button>
-                <button onclick="setMode('long')" id="btn-long" class="timer-btn px-6 py-2 rounded-lg">Long</button>
+            <div class="flex gap-1 mb-8 bg-white/5 p-1 rounded-xl border border-white/5 w-fit">
+                <button onclick="setMode('focus')" id="btn-focus" class="timer-btn active px-4 sm:px-6 py-2 rounded-lg">Focus</button>
+                <button onclick="setMode('short')" id="btn-short" class="timer-btn px-4 sm:px-6 py-2 rounded-lg">Short</button>
+                <button onclick="setMode('long')" id="btn-long" class="timer-btn px-4 sm:px-6 py-2 rounded-lg">Long</button>
             </div>
 
             <!-- The Clock -->
-            <div id="timer-display" class="text-[9.5rem] font-bold tracking-tighter mb-10 tabular-nums leading-none select-none">
+            <div id="timer-display" class="text-7xl sm:text-8xl md:text-[9.5rem] font-bold tracking-tighter mb-8 tabular-nums leading-none select-none">
                 25:00
             </div>
 
             <!-- Controls -->
-            <div class="flex items-center gap-8">
-                <button id="start-btn" onclick="toggleTimer()" class="bg-white text-black px-12 py-4 rounded-full font-extrabold text-xs tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-lg">
+            <div class="flex items-center gap-6 sm:gap-8">
+                <button id="start-btn" onclick="toggleTimer()" class="bg-white text-black px-8 sm:px-12 py-3 sm:py-4 rounded-full font-extrabold text-[10px] sm:text-xs tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-lg">
                     START
                 </button>
                 
-                <div class="flex gap-3">
-                    <button onclick="resetTimer()" class="nav-icon-btn p-2.5 rounded-full hover:bg-white/5">
-                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                <div class="flex gap-2 sm:gap-3">
+                    <button onclick="resetTimer()" class="nav-icon-btn p-2 sm:p-2.5 rounded-full hover:bg-white/5 active:scale-90">
+                        <i data-lucide="rotate-ccw" class="w-4 sm:w-5 h-4 sm:h-5"></i>
                     </button>
-                    <button onclick="skipTimer()" class="nav-icon-btn p-2.5 rounded-full hover:bg-white/5">
-                        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                    <button onclick="skipTimer()" class="nav-icon-btn p-2 sm:p-2.5 rounded-full hover:bg-white/5 active:scale-90">
+                        <i data-lucide="chevron-right" class="w-5 sm:w-6 h-5 sm:h-6"></i>
                     </button>
                 </div>
             </div>
@@ -201,41 +211,41 @@
     </main>
 
     <!-- Footer -->
-    <footer class="flex justify-between items-end z-10 w-full">
+    <footer class="flex flex-col sm:flex-row justify-between items-center sm:items-end z-10 w-full gap-4 mt-4">
         <!-- Live Clock -->
-        <div class="glass px-8 py-5 flex items-center gap-5">
+        <div class="glass px-6 sm:px-8 py-3 sm:py-5 flex items-center gap-4 order-2 sm:order-1">
             <div class="relative">
-                <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
-                <div class="absolute inset-0 w-1.5 h-1.5 bg-white rounded-full animate-ping opacity-40"></div>
+                <div class="w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full"></div>
+                <div class="absolute inset-0 w-1 h-1 sm:w-1.5 sm:h-1.5 bg-white rounded-full animate-ping opacity-40"></div>
             </div>
-            <span id="real-time" class="text-xl font-extralight tracking-widest opacity-70">12:00 PM</span>
+            <span id="real-time" class="text-lg sm:text-xl font-extralight tracking-widest opacity-70">12:00 PM</span>
         </div>
 
-        <!-- Music and Background Controls -->
-        <div class="flex gap-5">
-            <div class="glass px-8 py-5 flex items-center justify-center min-w-[180px]">
-                <button id="music-toggle" onclick="toggleMusic()" class="flex items-center gap-4 hover:text-white transition-all group">
-                    <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
-                        <i id="music-icon" data-lucide="play" class="w-5 h-5 opacity-60 group-hover:opacity-100"></i>
+        <!-- Controls Group -->
+        <div class="flex gap-3 sm:gap-5 order-1 sm:order-2 w-full sm:w-auto justify-center">
+            <!-- Music Player -->
+            <div class="glass px-4 sm:px-6 py-3 sm:py-5 flex items-center justify-center flex-grow sm:flex-grow-0 min-w-[140px] sm:min-w-[180px]">
+                <button id="music-toggle" onclick="toggleMusic()" class="flex items-center gap-3 sm:gap-4 hover:text-white transition-all group">
+                    <div class="w-8 h-8 sm:w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                        <i id="music-icon" data-lucide="play" class="w-4 h-4 sm:w-5 h-5 opacity-60 group-hover:opacity-100"></i>
                     </div>
                     <div class="flex flex-col items-start">
-                        <span id="music-status" class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">Play Music</span>
-                        <span id="music-subtext" class="text-[8px] uppercase tracking-[0.1em] opacity-20">assets/music.mp3</span>
+                        <span id="music-status" class="text-[8px] sm:text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">Play</span>
                     </div>
                 </button>
             </div>
             
             <!-- Background Switcher -->
-            <button onclick="changeBackground()" class="glass p-5 nav-icon-btn group relative">
-                <i data-lucide="image" class="w-5 h-5"></i>
-                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-black/80 text-[8px] uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Environment</span>
+            <button onclick="changeBackground()" class="glass p-4 sm:p-5 nav-icon-btn group relative active:scale-95">
+                <i data-lucide="image" class="w-4 sm:w-5 h-4 sm:h-5"></i>
+                <span class="hidden sm:block absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-black/80 text-[8px] uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Environment</span>
             </button>
         </div>
     </footer>
 
     <!-- Connected to assets/music.mp3 -->
     <audio id="audio-element" loop preload="auto">
-        <source src="assetcs/music.mp3" type="audio/mpeg">
+        <source src="assects/music.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -360,26 +370,30 @@
             if (isMusicPlaying) {
                 audio.pause();
                 musicIcon.setAttribute('data-lucide', 'play');
-                musicStatus.textContent = "Play Music";
+                musicStatus.textContent = "Play";
                 isMusicPlaying = false;
             } else {
                 try {
                     await audio.play();
                     musicIcon.setAttribute('data-lucide', 'pause');
-                    musicStatus.textContent = "Pause Music";
+                    musicStatus.textContent = "Pause";
                     isMusicPlaying = true;
                 } catch (err) {
                     console.error("Playback failed. Ensure assets/music.mp3 exists.", err);
                     musicIcon.setAttribute('data-lucide', 'alert-circle');
-                    musicStatus.textContent = "Music Error";
+                    musicStatus.textContent = "Error";
                     setTimeout(() => {
                         musicIcon.setAttribute('data-lucide', 'play');
-                        musicStatus.textContent = "Play Music";
+                        musicStatus.textContent = "Play";
                     }, 2000);
                     isMusicPlaying = false;
                 }
             }
             lucide.createIcons();
+        }
+
+        function adjustVolume() {
+            audio.volume = 0.5; // Fixed default or can be added back if needed
         }
 
         function changeBackground() {
@@ -400,6 +414,14 @@
             }, 1000);
         }
         setInterval(rotateQuote, 60000);
+
+        // Fix for iOS Safari height issues
+        const setVh = () => {
+            let vh = window.innerHeight * 0.01;
+            document.documentElement.style.setProperty('--vh', `${vh}px`);
+        };
+        window.addEventListener('resize', setVh);
+        setVh();
 
         updateDisplay();
     </script>
