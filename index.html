@@ -211,7 +211,7 @@
             <span id="real-time" class="text-xl font-extralight tracking-widest opacity-70">12:00 PM</span>
         </div>
 
-        <!-- Music Controller (Updated as requested) -->
+        <!-- Music and Background Controls -->
         <div class="flex gap-5">
             <div class="glass px-8 py-5 flex items-center justify-center min-w-[180px]">
                 <button id="music-toggle" onclick="toggleMusic()" class="flex items-center gap-4 hover:text-white transition-all group">
@@ -230,16 +230,12 @@
                 <i data-lucide="image" class="w-5 h-5"></i>
                 <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-black/80 text-[8px] uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Environment</span>
             </button>
-            
-            <button class="glass p-5 nav-icon-btn">
-                <i data-lucide="layout-grid" class="w-5 h-5"></i>
-            </button>
         </div>
     </footer>
 
     <!-- Connected to assets/music.mp3 -->
     <audio id="audio-element" loop preload="auto">
-        <source src="assects/music.mp3" type="audio/mpeg">
+        <source src="assetcs/music.mp3" type="audio/mpeg">
     </audio>
 
     <script>
@@ -255,7 +251,6 @@
             "https://cdnb.artstation.com/p/assets/images/images/037/263/051/original/karina-formanova-rainforest-animation.gif?1619929364",
             "https://i.redd.it/8hr60jort3w91.gif",
             "https://storage.ko-fi.com/cdn/useruploads/display/6ede6ca8-cf9c-400c-aab2-01e17023f17d_forest-export.gif",
-            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1ZHdyM3U4bmh6eGN3eXJqbm52bmh6eGN3eXJqbm52bmh6eGN3eXJqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxxcaatvY9G/giphy.gif",
             "https://i.redd.it/jdpu9i0vyd5b1.gif"
         ];
 
@@ -306,7 +301,6 @@
             ambientRing.classList.add('running-glow');
             document.body.classList.add('running');
             
-            // If music was playing before pause, ensure it starts again
             if (isMusicPlaying) {
                 audio.play().catch(e => console.log("Audio play blocked or file missing"));
             }
@@ -376,7 +370,6 @@
                     isMusicPlaying = true;
                 } catch (err) {
                     console.error("Playback failed. Ensure assets/music.mp3 exists.", err);
-                    // Update UI to show we tried
                     musicIcon.setAttribute('data-lucide', 'alert-circle');
                     musicStatus.textContent = "Music Error";
                     setTimeout(() => {
