@@ -1,14 +1,400 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>health-map-plus</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flocus | Deep Focus Environment</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Dope Font Imports -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@200;300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-timer: 'Space Grotesk', sans-serif;
+            --accent-glow: rgba(255, 255, 255, 0.15);
+        }
+
+        body {
+            font-family: var(--font-main);
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+            color: white;
+            letter-spacing: -0.01em;
+        }
+
+        #bg-video {
+            position: fixed;
+            right: 0;
+            bottom: 0;
+            min-width: 100%;
+            min-height: 100%;
+            z-index: -1;
+            filter: brightness(0.45) contrast(1.1);
+            object-fit: cover;
+            transition: opacity 0.8s ease-in-out;
+        }
+
+        /* High-End Glassmorphism - Compact Scale */
+        .glass {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.03) 100%);
+            backdrop-filter: blur(30px) saturate(150%);
+            -webkit-backdrop-filter: blur(30px) saturate(150%);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 2.5rem;
+            box-shadow: 0 40px 100px -20px rgba(0, 0, 0, 0.6);
+        }
+
+        .timer-btn {
+            font-family: var(--font-main);
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+            font-size: 0.65rem;
+            font-weight: 700;
+            opacity: 0.4;
+            transition: all 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .timer-btn.active {
+            background: rgba(255, 255, 255, 1);
+            color: black;
+            opacity: 1;
+            box-shadow: 0 8px 16px -4px rgba(255, 255, 255, 0.3);
+        }
+
+        #timer-display {
+            font-family: var(--font-timer);
+            letter-spacing: -0.05em;
+            text-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Adjusted Progress Ring */
+        .progress-ring {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 420px;
+            height: 420px;
+            z-index: -1;
+            opacity: 0.15;
+            pointer-events: none;
+            transition: opacity 1s ease;
+        }
+
+        .running .progress-ring {
+            opacity: 0.4;
+        }
+
+        @keyframes pulse-ring {
+            0% { transform: translate(-50%, -50%) scale(0.98); opacity: 0.15; }
+            50% { transform: translate(-50%, -50%) scale(1.03); opacity: 0.4; }
+            100% { transform: translate(-50%, -50%) scale(0.98); opacity: 0.15; }
+        }
+
+        .running-glow {
+            animation: pulse-ring 4s infinite ease-in-out;
+        }
+
+        .subject-input {
+            font-weight: 200;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        .subject-input:focus {
+            outline: none;
+            opacity: 1;
+        }
+
+        #audio-element { display: none; }
+        
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            height: 2px;
+            background: rgba(255,255,255,0.15);
+            border-radius: 1px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 10px;
+            width: 10px;
+            border-radius: 50%;
+            background: #fff;
+            margin-top: -4px;
+        }
+
+        .nav-icon-btn {
+            transition: all 0.3s ease;
+            color: rgba(255,255,255,0.4);
+        }
+        .nav-icon-btn:hover {
+            color: rgba(255,255,255,1);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex flex-col justify-between p-12">
+
+    <!-- Ambient Background -->
+    <img id="bg-video" src="https://narutobattlescreen-js.netlify.app/fightingbackground1.gif" alt="Environment">
+
+    <!-- Header -->
+    <header class="flex justify-between items-start z-10 w-full">
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2 opacity-50">
+                <div class="w-6 h-[1px] bg-white"></div>
+                <span class="text-[10px] tracking-[0.4em] font-bold uppercase">study environment</span>
+            </div>
+        </div>
+        <div class="max-w-sm text-right">
+            <p id="quote-display" class="text-lg font-light opacity-50 leading-relaxed italic transition-all duration-1000 select-none">
+                "The old ways won't open new doors."
+            </p>
+        </div>
+    </header>
+
+    <!-- Main Content: Centered -->
+    <main class="relative flex flex-col items-center justify-center z-10 flex-grow">
+        
+        <!-- Glowing Ambient Ring -->
+        <div id="ambient-ring" class="progress-ring">
+            <svg width="100%" height="100%" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="48" fill="none" stroke="white" stroke-width="0.1" stroke-dasharray="1 3" />
+            </svg>
+        </div>
+
+        <!-- Subject -->
+        <div class="flex items-center gap-3 mb-8 group cursor-default transition-all">
+            <i data-lucide="circle-dot" class="w-2.5 h-2.5 text-white opacity-30 group-hover:opacity-100 transition-opacity"></i>
+            <span id="subject-text" contenteditable="true" class="subject-input cursor-text hover:opacity-100 transition-opacity">Deep Work Session</span>
+        </div>
+
+        <!-- Timer Card -->
+        <div class="glass p-10 w-full max-w-lg flex flex-col items-center">
+            
+            <!-- Mode Selector -->
+            <div class="flex gap-1 mb-10 bg-white/5 p-1 rounded-xl border border-white/5">
+                <button onclick="setMode('focus')" id="btn-focus" class="timer-btn active px-6 py-2 rounded-lg">Focus</button>
+                <button onclick="setMode('short')" id="btn-short" class="timer-btn px-6 py-2 rounded-lg">Short</button>
+                <button onclick="setMode('long')" id="btn-long" class="timer-btn px-6 py-2 rounded-lg">Long</button>
+            </div>
+
+            <!-- The Clock -->
+            <div id="timer-display" class="text-[9.5rem] font-bold tracking-tighter mb-10 tabular-nums leading-none select-none">
+                25:00
+            </div>
+
+            <!-- Controls -->
+            <div class="flex items-center gap-8">
+                <button id="start-btn" onclick="toggleTimer()" class="bg-white text-black px-12 py-4 rounded-full font-extrabold text-xs tracking-[0.2em] hover:scale-105 active:scale-95 transition-all shadow-lg">
+                    START
+                </button>
+                
+                <div class="flex gap-3">
+                    <button onclick="resetTimer()" class="nav-icon-btn p-2.5 rounded-full hover:bg-white/5">
+                        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="skipTimer()" class="nav-icon-btn p-2.5 rounded-full hover:bg-white/5">
+                        <i data-lucide="chevron-right" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="flex justify-between items-end z-10 w-full">
+        <div class="glass px-8 py-5 flex items-center gap-5">
+            <div class="relative">
+                <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+                <div class="absolute inset-0 w-1.5 h-1.5 bg-white rounded-full animate-ping opacity-40"></div>
+            </div>
+            <span id="real-time" class="text-xl font-extralight tracking-widest opacity-70">12:00 PM</span>
+        </div>
+
+        <div class="flex gap-5">
+            <div class="glass px-6 py-5 flex items-center gap-5">
+                <button id="music-toggle" onclick="toggleMusic()" class="nav-icon-btn">
+                    <i id="music-icon" data-lucide="volume-x" class="w-5 h-5"></i>
+                </button>
+                <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.5" oninput="adjustVolume()" class="w-24">
+                <i data-lucide="music" class="w-4 h-4 opacity-20"></i>
+            </div>
+            
+            <!-- Background Switcher Toggle -->
+            <button onclick="changeBackground()" class="glass p-5 nav-icon-btn group relative">
+                <i data-lucide="image" class="w-5 h-5"></i>
+                <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-black/80 text-[8px] uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Environment</span>
+            </button>
+            
+            <button class="glass p-5 nav-icon-btn">
+                <i data-lucide="layout-grid" class="w-5 h-5"></i>
+            </button>
+        </div>
+    </footer>
+
+    <!-- Connected to assets/music.mp3 -->
+    <audio id="audio-element" loop>
+        <source src="assects/music.mp3" type="audio/mpeg">
+    </audio>
+
+    <script>
+        const modes = {
+            focus: { time: 25 * 60, label: 'Focus' },
+            short: { time: 5 * 60, label: 'Short Break' },
+            long: { time: 15 * 60, label: 'Long Break' }
+        };
+
+        const backgrounds = [
+            "https://narutobattlescreen-js.netlify.app/fightingbackground1.gif",
+            "https://cdnb.artstation.com/p/assets/images/images/053/358/841/original/jake-comingheremoreoftenlately.gif?1662021666",
+            "https://cdnb.artstation.com/p/assets/images/images/037/263/051/original/karina-formanova-rainforest-animation.gif?1619929364",
+            "https://i.redd.it/8hr60jort3w91.gif",
+            "https://storage.ko-fi.com/cdn/useruploads/display/6ede6ca8-cf9c-400c-aab2-01e17023f17d_forest-export.gif",
+            "https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExOHp1ZHdyM3U4bmh6eGN3eXJqbm52bmh6eGN3eXJqbm52bmh6eGN3eXJqJmVwPXYxX2ludGVybmFsX2dpZl9ieV9pZCZjdD1n/3o7TKMGpxxcaatvY9G/giphy.gif",
+            "https://i.redd.it/jdpu9i0vyd5b1.gif"
+        ];
+
+        const quotes = [
+            "The old ways won't open new doors.",
+            "Silence is the ultimate luxury.",
+            "Flow begins where distractions end.",
+            "Breathe in the wind, breathe out the stress.",
+            "Your focus determines your reality.",
+            "Progress is quiet. Keep going.",
+            "One task. One breath. One moment."
+        ];
+
+        let currentMode = 'focus';
+        let timeLeft = modes.focus.time;
+        let timerId = null;
+        let isMusicPlaying = false;
+        let bgIndex = 0;
+
+        const timerDisplay = document.getElementById('timer-display');
+        const startBtn = document.getElementById('start-btn');
+        const realTimeDisplay = document.getElementById('real-time');
+        const quoteDisplay = document.getElementById('quote-display');
+        const audio = document.getElementById('audio-element');
+        const musicIcon = document.getElementById('music-icon');
+        const ambientRing = document.getElementById('ambient-ring');
+        const bgVideo = document.getElementById('bg-video');
+
+        lucide.createIcons();
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            const formattedTime = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            timerDisplay.textContent = formattedTime;
+            document.title = `${formattedTime} • ${modes[currentMode].label}`;
+        }
+
+        function toggleTimer() {
+            if (timerId) pauseTimer();
+            else startTimer();
+        }
+
+        function startTimer() {
+            if (timerId) return;
+            startBtn.textContent = 'PAUSE';
+            ambientRing.classList.add('running-glow');
+            document.body.classList.add('running');
+            
+            timerId = setInterval(() => {
+                timeLeft--;
+                updateDisplay();
+                if (timeLeft <= 0) {
+                    clearInterval(timerId);
+                    timerId = null;
+                    handleTimerEnd();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            clearInterval(timerId);
+            timerId = null;
+            startBtn.textContent = 'START';
+            ambientRing.classList.remove('running-glow');
+            document.body.classList.remove('running');
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            timeLeft = modes[currentMode].time;
+            updateDisplay();
+        }
+
+        function skipTimer() {
+            handleTimerEnd();
+        }
+
+        function handleTimerEnd() {
+            if (currentMode === 'focus') setMode('short');
+            else setMode('focus');
+            startTimer(); 
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            timeLeft = modes[mode].time;
+            document.querySelectorAll('.timer-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`btn-${mode}`).classList.add('active');
+            updateDisplay();
+            pauseTimer();
+        }
+
+        function updateRealTime() {
+            const now = new Date();
+            realTimeDisplay.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        setInterval(updateRealTime, 1000);
+        updateRealTime();
+
+        function toggleMusic() {
+            if (isMusicPlaying) {
+                audio.pause();
+                musicIcon.setAttribute('data-lucide', 'volume-x');
+            } else {
+                audio.play();
+                musicIcon.setAttribute('data-lucide', 'volume-2');
+            }
+            isMusicPlaying = !isMusicPlaying;
+            lucide.createIcons();
+        }
+
+        function adjustVolume() {
+            audio.volume = document.getElementById('volume-slider').value;
+        }
+
+        function changeBackground() {
+            bgIndex = (bgIndex + 1) % backgrounds.length;
+            bgVideo.style.opacity = 0;
+            setTimeout(() => {
+                bgVideo.src = backgrounds[bgIndex];
+                bgVideo.style.opacity = 1;
+            }, 800);
+        }
+
+        function rotateQuote() {
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            quoteDisplay.style.opacity = 0;
+            setTimeout(() => {
+                quoteDisplay.textContent = `"${quotes[randomIndex]}"`;
+                quoteDisplay.style.opacity = 0.5;
+            }, 1000);
+        }
+        setInterval(rotateQuote, 60000);
+
+        updateDisplay();
+    </script>
+</body>
 </html>
