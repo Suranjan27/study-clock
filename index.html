@@ -112,24 +112,6 @@
 
         #audio-element { display: none; }
         
-        input[type=range] {
-            -webkit-appearance: none;
-            background: transparent;
-        }
-        input[type=range]::-webkit-slider-runnable-track {
-            height: 2px;
-            background: rgba(255,255,255,0.15);
-            border-radius: 1px;
-        }
-        input[type=range]::-webkit-slider-thumb {
-            -webkit-appearance: none;
-            height: 10px;
-            width: 10px;
-            border-radius: 50%;
-            background: #fff;
-            margin-top: -4px;
-        }
-
         .nav-icon-btn {
             transition: all 0.3s ease;
             color: rgba(255,255,255,0.4);
@@ -137,6 +119,15 @@
         .nav-icon-btn:hover {
             color: rgba(255,255,255,1);
             transform: translateY(-1px);
+        }
+
+        .music-pulse {
+            animation: music-bounce 1s infinite ease-in-out;
+        }
+
+        @keyframes music-bounce {
+            0%, 100% { transform: scaleY(1); }
+            50% { transform: scaleY(1.5); }
         }
     </style>
 </head>
@@ -211,6 +202,7 @@
 
     <!-- Footer -->
     <footer class="flex justify-between items-end z-10 w-full">
+        <!-- Live Clock -->
         <div class="glass px-8 py-5 flex items-center gap-5">
             <div class="relative">
                 <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
@@ -219,16 +211,21 @@
             <span id="real-time" class="text-xl font-extralight tracking-widest opacity-70">12:00 PM</span>
         </div>
 
+        <!-- Music Controller (Updated as requested) -->
         <div class="flex gap-5">
-            <div class="glass px-6 py-5 flex items-center gap-5">
-                <button id="music-toggle" onclick="toggleMusic()" class="nav-icon-btn">
-                    <i id="music-icon" data-lucide="volume-x" class="w-5 h-5"></i>
+            <div class="glass px-8 py-5 flex items-center justify-center min-w-[180px]">
+                <button id="music-toggle" onclick="toggleMusic()" class="flex items-center gap-4 hover:text-white transition-all group">
+                    <div class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                        <i id="music-icon" data-lucide="play" class="w-5 h-5 opacity-60 group-hover:opacity-100"></i>
+                    </div>
+                    <div class="flex flex-col items-start">
+                        <span id="music-status" class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-40 group-hover:opacity-100">Play Music</span>
+                        <span id="music-subtext" class="text-[8px] uppercase tracking-[0.1em] opacity-20">assets/music.mp3</span>
+                    </div>
                 </button>
-                <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.5" oninput="adjustVolume()" class="w-24">
-                <i data-lucide="music" class="w-4 h-4 opacity-20"></i>
             </div>
             
-            <!-- Background Switcher Toggle -->
+            <!-- Background Switcher -->
             <button onclick="changeBackground()" class="glass p-5 nav-icon-btn group relative">
                 <i data-lucide="image" class="w-5 h-5"></i>
                 <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-4 bg-black/80 text-[8px] uppercase tracking-widest px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Environment</span>
@@ -241,7 +238,7 @@
     </footer>
 
     <!-- Connected to assets/music.mp3 -->
-    <audio id="audio-element" loop>
+    <audio id="audio-element" loop preload="auto">
         <source src="assects/music.mp3" type="audio/mpeg">
     </audio>
 
@@ -284,6 +281,7 @@
         const quoteDisplay = document.getElementById('quote-display');
         const audio = document.getElementById('audio-element');
         const musicIcon = document.getElementById('music-icon');
+        const musicStatus = document.getElementById('music-status');
         const ambientRing = document.getElementById('ambient-ring');
         const bgVideo = document.getElementById('bg-video');
 
@@ -308,6 +306,11 @@
             ambientRing.classList.add('running-glow');
             document.body.classList.add('running');
             
+            // If music was playing before pause, ensure it starts again
+            if (isMusicPlaying) {
+                audio.play().catch(e => console.log("Audio play blocked or file missing"));
+            }
+
             timerId = setInterval(() => {
                 timeLeft--;
                 updateDisplay();
@@ -359,20 +362,31 @@
         setInterval(updateRealTime, 1000);
         updateRealTime();
 
-        function toggleMusic() {
+        async function toggleMusic() {
             if (isMusicPlaying) {
                 audio.pause();
-                musicIcon.setAttribute('data-lucide', 'volume-x');
+                musicIcon.setAttribute('data-lucide', 'play');
+                musicStatus.textContent = "Play Music";
+                isMusicPlaying = false;
             } else {
-                audio.play();
-                musicIcon.setAttribute('data-lucide', 'volume-2');
+                try {
+                    await audio.play();
+                    musicIcon.setAttribute('data-lucide', 'pause');
+                    musicStatus.textContent = "Pause Music";
+                    isMusicPlaying = true;
+                } catch (err) {
+                    console.error("Playback failed. Ensure assets/music.mp3 exists.", err);
+                    // Update UI to show we tried
+                    musicIcon.setAttribute('data-lucide', 'alert-circle');
+                    musicStatus.textContent = "Music Error";
+                    setTimeout(() => {
+                        musicIcon.setAttribute('data-lucide', 'play');
+                        musicStatus.textContent = "Play Music";
+                    }, 2000);
+                    isMusicPlaying = false;
+                }
             }
-            isMusicPlaying = !isMusicPlaying;
             lucide.createIcons();
-        }
-
-        function adjustVolume() {
-            audio.volume = document.getElementById('volume-slider').value;
         }
 
         function changeBackground() {
