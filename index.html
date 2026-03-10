@@ -18,11 +18,10 @@
         body {
             font-family: var(--font-main);
             margin: 0;
-            overflow-x: hidden;
+            overflow: hidden;
             background: #000;
             color: white;
             letter-spacing: -0.01em;
-            /* Use dynamic viewport height for mobile browsers */
             height: 100dvh; 
         }
 
@@ -118,7 +117,7 @@
             white-space: normal;
         }
 
-        #audio-element { display: none; }
+        #audio-element, #alarm-element { display: none; }
         
         .nav-icon-btn {
             transition: all 0.3s ease;
@@ -127,6 +126,37 @@
         }
         .nav-icon-btn:hover {
             color: rgba(255,255,255,1);
+        }
+
+        /* Celebration Canvas */
+        #celebration-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 100;
+        }
+
+        /* Modal Settings Styles */
+        #settings-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 50;
+            backdrop-filter: blur(10px);
+        }
+
+        .settings-input {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            width: 80px;
+            text-align: center;
         }
 
         /* Responsive UI Adjustments */
@@ -142,6 +172,9 @@
     </style>
 </head>
 <body class="flex flex-col justify-between p-4 sm:p-8 lg:p-12">
+
+    <!-- Celebration Canvas -->
+    <canvas id="celebration-canvas"></canvas>
 
     <!-- Ambient Background -->
     <img id="bg-video" src="https://narutobattlescreen-js.netlify.app/fightingbackground1.gif" alt="Environment">
@@ -189,7 +222,7 @@
 
             <!-- The Clock -->
             <div id="timer-display" class="text-7xl sm:text-8xl md:text-[9.5rem] font-bold tracking-tighter mb-8 tabular-nums leading-none select-none">
-                25:00
+                45:00
             </div>
 
             <!-- Controls -->
@@ -209,6 +242,35 @@
             </div>
         </div>
     </main>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="flex items-center justify-center">
+        <div class="glass p-8 w-full max-w-sm mx-4">
+            <h2 class="text-xl font-bold mb-6 tracking-widest uppercase">Session Config</h2>
+            
+            <div class="space-y-6">
+                <div class="flex justify-between items-center">
+                    <span class="text-sm opacity-60">Focus (Min 45m)</span>
+                    <input type="number" id="focus-input" min="45" value="45" class="settings-input">
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-sm opacity-60">Long Break (Min 90m)</span>
+                    <input type="number" id="long-input" min="90" value="90" class="settings-input">
+                </div>
+                <div class="flex justify-between items-center pt-4 border-t border-white/10">
+                    <span class="text-sm opacity-60">End Alarm</span>
+                    <button id="alarm-toggle" onclick="toggleAlarmOption()" class="nav-icon-btn">
+                        <i id="alarm-icon" data-lucide="bell-off" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="mt-8 flex gap-4">
+                <button onclick="closeSettings()" class="flex-grow py-3 border border-white/10 rounded-xl text-xs uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">Cancel</button>
+                <button onclick="applySettings()" class="flex-grow py-3 bg-white text-black rounded-xl text-xs font-bold uppercase tracking-widest">Apply</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="flex flex-col sm:flex-row justify-between items-center sm:items-end z-10 w-full gap-4 mt-4">
@@ -235,6 +297,11 @@
                 </button>
             </div>
             
+            <!-- Settings Button -->
+            <button onclick="openSettings()" class="glass p-4 sm:p-5 nav-icon-btn active:scale-95">
+                <i data-lucide="settings" class="w-4 sm:w-5 h-4 sm:h-5"></i>
+            </button>
+
             <!-- Background Switcher -->
             <button onclick="changeBackground()" class="glass p-4 sm:p-5 nav-icon-btn group relative active:scale-95">
                 <i data-lucide="image" class="w-4 sm:w-5 h-4 sm:h-5"></i>
@@ -245,14 +312,19 @@
 
     <!-- Connected to assets/music.mp3 -->
     <audio id="audio-element" loop preload="auto">
-        <source src="assects/music.mp3" type="audio/mpeg">
+        <source src="assets/music.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Alarm sound -->
+    <audio id="alarm-element">
+        <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock_short.ogg" type="audio/ogg">
     </audio>
 
     <script>
         const modes = {
-            focus: { time: 25 * 60, label: 'Focus' },
+            focus: { time: 45 * 60, label: 'Focus' },
             short: { time: 5 * 60, label: 'Short Break' },
-            long: { time: 15 * 60, label: 'Long Break' }
+            long: { time: 90 * 60, label: 'Long Break' }
         };
 
         const backgrounds = [
@@ -278,6 +350,7 @@
         let timeLeft = modes.focus.time;
         let timerId = null;
         let isMusicPlaying = false;
+        let isAlarmEnabled = false;
         let bgIndex = 0;
 
         const timerDisplay = document.getElementById('timer-display');
@@ -285,10 +358,15 @@
         const realTimeDisplay = document.getElementById('real-time');
         const quoteDisplay = document.getElementById('quote-display');
         const audio = document.getElementById('audio-element');
+        const alarmAudio = document.getElementById('alarm-element');
         const musicIcon = document.getElementById('music-icon');
         const musicStatus = document.getElementById('music-status');
         const ambientRing = document.getElementById('ambient-ring');
         const bgVideo = document.getElementById('bg-video');
+        const celebrationCanvas = document.getElementById('celebration-canvas');
+        const ctx = celebrationCanvas.getContext('2d');
+
+        let particles = [];
 
         lucide.createIcons();
 
@@ -312,7 +390,7 @@
             document.body.classList.add('running');
             
             if (isMusicPlaying) {
-                audio.play().catch(e => console.log("Audio play blocked or file missing"));
+                audio.play().catch(e => console.log("Audio play blocked"));
             }
 
             timerId = setInterval(() => {
@@ -345,8 +423,19 @@
         }
 
         function handleTimerEnd() {
-            if (currentMode === 'focus') setMode('short');
-            else setMode('focus');
+            // Celebrate if focus ended
+            if (currentMode === 'focus') {
+                triggerCelebration();
+                if (isAlarmEnabled) {
+                    alarmAudio.play().catch(e => console.log("Alarm sound blocked"));
+                }
+                setMode('short');
+            } else if (currentMode === 'short') {
+                setMode('focus');
+            } else {
+                setMode('focus');
+            }
+            
             startTimer(); 
         }
 
@@ -366,6 +455,42 @@
         setInterval(updateRealTime, 1000);
         updateRealTime();
 
+        // Settings Logic
+        function openSettings() {
+            document.getElementById('settings-modal').style.display = 'flex';
+        }
+
+        function closeSettings() {
+            document.getElementById('settings-modal').style.display = 'none';
+        }
+
+        function applySettings() {
+            let focusVal = parseInt(document.getElementById('focus-input').value);
+            let longVal = parseInt(document.getElementById('long-input').value);
+
+            if (focusVal < 45) focusVal = 45;
+            if (longVal < 90) longVal = 90;
+
+            modes.focus.time = focusVal * 60;
+            modes.long.time = longVal * 60;
+
+            resetTimer();
+            closeSettings();
+        }
+
+        function toggleAlarmOption() {
+            isAlarmEnabled = !isAlarmEnabled;
+            const icon = document.getElementById('alarm-icon');
+            if (isAlarmEnabled) {
+                icon.setAttribute('data-lucide', 'bell');
+                icon.classList.add('text-green-400');
+            } else {
+                icon.setAttribute('data-lucide', 'bell-off');
+                icon.classList.remove('text-green-400');
+            }
+            lucide.createIcons();
+        }
+
         async function toggleMusic() {
             if (isMusicPlaying) {
                 audio.pause();
@@ -379,7 +504,6 @@
                     musicStatus.textContent = "Pause";
                     isMusicPlaying = true;
                 } catch (err) {
-                    console.error("Playback failed. Ensure assets/music.mp3 exists.", err);
                     musicIcon.setAttribute('data-lucide', 'alert-circle');
                     musicStatus.textContent = "Error";
                     setTimeout(() => {
@@ -390,10 +514,6 @@
                 }
             }
             lucide.createIcons();
-        }
-
-        function adjustVolume() {
-            audio.volume = 0.5; // Fixed default or can be added back if needed
         }
 
         function changeBackground() {
@@ -415,14 +535,61 @@
         }
         setInterval(rotateQuote, 60000);
 
-        // Fix for iOS Safari height issues
-        const setVh = () => {
+        // Celebration Animation Logic
+        function triggerCelebration() {
+            particles = [];
+            for (let i = 0; i < 150; i++) {
+                particles.push({
+                    x: window.innerWidth / 2,
+                    y: window.innerHeight / 2,
+                    vx: (Math.random() - 0.5) * 15,
+                    vy: (Math.random() - 0.5) * 15,
+                    size: Math.random() * 8 + 2,
+                    color: `hsl(${Math.random() * 360}, 70%, 70%)`,
+                    life: 1
+                });
+            }
+            requestAnimationFrame(animateCelebration);
+        }
+
+        function animateCelebration() {
+            if (particles.length === 0) return;
+            
+            ctx.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+            
+            particles.forEach((p, i) => {
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.15; // gravity
+                p.life -= 0.01;
+                
+                ctx.fillStyle = p.color;
+                ctx.globalAlpha = p.life;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                ctx.fill();
+                
+                if (p.life <= 0) particles.splice(i, 1);
+            });
+            
+            if (particles.length > 0) {
+                requestAnimationFrame(animateCelebration);
+            } else {
+                ctx.clearRect(0, 0, celebrationCanvas.width, celebrationCanvas.height);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            celebrationCanvas.width = window.innerWidth;
+            celebrationCanvas.height = window.innerHeight;
+            
             let vh = window.innerHeight * 0.01;
             document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        window.addEventListener('resize', setVh);
-        setVh();
-
+        });
+        
+        // Initial setup
+        celebrationCanvas.width = window.innerWidth;
+        celebrationCanvas.height = window.innerHeight;
         updateDisplay();
     </script>
 </body>
